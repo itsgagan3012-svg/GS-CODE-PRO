@@ -11,7 +11,7 @@
 **👉 https://itsgagan3012-svg.github.io/GS-CODE-PRO/**
 
 ### ⚡ Features
-- ✅ 10+ Languages - Python, JS, C, C++, Java
+- ✅ 5+ Languages - Python, JS, C, C++, Java
 - ✅ No Login Required - 100% Free
 - ✅ Super Fast - Runs in Browser
 - ✅ Mobile Friendly - Made for Students
