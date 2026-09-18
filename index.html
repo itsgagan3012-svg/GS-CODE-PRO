@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GS CODE PRO - CodePen Fix</title>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}body{font-family:sans-serif;background:#f1f5f9}
+.top{display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0}
+.logo{font-weight:900;color:#2563eb}select,button{padding:8px 12px;border-radius:8px;border:1px solid #ccc;font-weight:700}
+select{margin-left:auto}.box{width:96%;max-width:1100px;margin:12px auto;background:#fff;border:1px solid #ddd;border-radius:10px;overflow:hidden}
+.grid{display:grid;grid-template-columns:1.2fr.8fr} @media(max-width:800px){.grid{grid-template-columns:1fr}}
+textarea{width:100%;background:#0f172a;color:#e2e8f0;border:0;outline:none;padding:12px;font-family:monospace;font-size:14px}
+#code{height:350px} #inp{height:80px;background:#1e293b;border-top:1px solid #333}
+#out{padding:12px;min-height:430px;white-space:pre-wrap;font-family:monospace;background:#020617;color:#86efac;font-size:13px}
+.err{color:#fca5a5!important}.ft{padding:10px;background:#f8fafc;display:flex;gap:10px}
+.run{background:#16a34a;color:#fff;border:0}
+</style>
+</head>
+<body>
+<div class="top">
+<div class="logo">GS CODE™ PRO</div>
+<select id="lang">
+<option value="python">Python - Works 100% in CodePen</option>
+<option value="javascript">JavaScript - Works 100%</option>
+<option value="c">C - (Needs GitHub+Vercel)</option>
+<option value="cpp">C++ - (Needs GitHub+Vercel)</option>
+<option value="java">Java - (Needs GitHub+Vercel)</option>
+</select>
+</div>
+
+<div class="box">
+<div class="grid">
+<div>
+<textarea id="code"></textarea>
+<textarea id="inp" placeholder="Input for program..."></textarea>
+</div>
+<div><pre id="out">Ready...</pre></div>
+</div>
+<div class="ft"><button id="run" class="run">▶ Run</button><button id="clr">Clear</button><span id="stat" style="margin-left:auto;font-size:12px">Ready</span></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const codeEl=$('code'), inpEl=$('inp'), langEl=$('lang'), outEl=$('out'), statEl=$('stat');
+
+const CODES={
+python:`print("GS CODE PRO - By Gagan")\nprint("Python 100% Working in CodePen!")\nname = input("Name: ")\nprint("Hello",name)`,
+javascript:`console.log("GS CODE PRO - By Gagan");\nconsole.log("JS 100% Working");\nfor(let i=1;i<=5;i++) console.log(i);`,
+c:`#include <stdio.h>\nint main(){\n printf("GS CODE PRO - By Gagan\\nC Working\\n");\n return 0;\n}`,
+cpp:`#include <iostream>\nusing namespace std;\nint main(){\n cout<<"GS CODE PRO - By Gagan"<<endl;\n return 0;\n}`,
+java:`public class prog{\n public static void main(String[] a){\n System.out.println("GS CODE PRO - By Gagan");\n }\n}`
+};
+
+function load(){ codeEl.value=CODES[langEl.value]; outEl.textContent="Ready: "+langEl.value; outEl.className=""; }
+langEl.onchange=load; load();
+$('clr').onclick=()=>{outEl.textContent="Cleared";}
+
+async function runPython(){
+ let output=""; let inputLines=inpEl.value.split("\\n"); let inputIdx=0;
+ Sk.configure({
+  output: t=>output+=t,
+  read: x=>{ if(Sk.builtinFiles===undefined || Sk.builtinFiles["files"][x]===undefined) throw "File not found: '"+x+"'"; return Sk.builtinFiles["files"][x]; },
+  inputfun: ()=>{ return inputLines[inputIdx++]||""; }
+ });
+ try{ await Sk.misceval.asyncToPromise(()=>Sk.importMainWithBody("<stdin>",false,codeEl.value,true)); outEl.textContent=output; statEl.textContent="Success"; outEl.className=""; }
+ catch(e){ outEl.textContent="Error: "+e.toString(); outEl.className="err"; statEl.textContent="Error"; }
+}
+
+$('run').onclick=async()=>{
+ const lang=langEl.value;
+ if(lang==="python"){ statEl.textContent="Running..."; await runPython(); return; }
+ if(lang==="javascript"){
+  try{ let logs=""; const old=console.log; console.log=(...a)=>logs+=a.join(" ")+"\\n"; eval(codeEl.value); console.log=old; outEl.textContent=logs; statEl.textContent="Success"; outEl.className=""; }catch(e){ outEl.textContent="Error: "+e.message; outEl.className="err"; }
+  return;
+ }
+ // For C/C++/Java - try with CORS proxy
+ statEl.textContent="Running..."; outEl.textContent="⏳ Trying C/C++/Java... (CodePen me ye kabhi-kabhi block hota hai)\\n\\nBest solution: Isko GitHub+Vercel pe daal do waha 100% chalega.";
+ try{
+  const compilerMap={c:"gcc-head",cpp:"gcc-head",java:"openjdk-head"};
+  const res=await fetch("https://wandbox.org/api/compile.json",{
+   method:"POST", headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({code:codeEl.value, compiler:compilerMap[lang], stdin:inpEl.value})
+  });
+  const d=await res.json();
+  outEl.textContent=(d.program_output||"")+(d.compiler_error||"")+(d.program_error||"") || "No output";
+  if(d.compiler_error) outEl.className="err";
+ }catch(e){
+  outEl.textContent="❌ CodePen ne is language ko block kiya hai.\\n\\nFIX: Isi code ko GitHub pe daal ke Vercel pe deploy kar - waha C/C++/Java 100% chalega.\\n\\nPython aur JS yaha CodePen pe hi chal rahe hai.";
+  outEl.className="err";
+ }
+};
+</script>
+</body>
+  </html>
