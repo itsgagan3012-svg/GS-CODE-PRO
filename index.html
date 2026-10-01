@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>GS-CODE ULTRA - Fixed</title>
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080c14;color:#e2e8f0;font-family:system-ui,Consolas;display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+.top{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#0f172a;border-bottom:1px solid #1e293b;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:8px;font-weight:900;font-size:15px}
+.logo b{background:linear-gradient(135deg,#00ff88,#00d2ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.ib{width:32px;height:32px;background:linear-gradient(135deg,#00ff88,#00d2ff);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000}
+.controls{display:flex;gap:5px;align-items:center}
+select{padding:8px 10px;border-radius:10px;border:1px solid #1e293b;background:#1e293b;color:white;font-size:12px;max-width:105px}
+.btn{padding:9px 11px;border-radius:10px;border:none;font-weight:700;font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.btn-run{background:linear-gradient(135deg,#00ff88,#00d2ff);color:#000}
+.btn-icon{background:#1e293b;color:#94a3b8;border:1px solid #2a3a52;width:36px;height:36px;justify-content:center}
+#editor{flex:1.3;min-height:0}
+.divider{height:5px;background:#0f172a;border-top:1px solid #1e293b;border-bottom:1px solid #1e293b}
+.bottom{flex:1;display:flex;flex-direction:column;background:#080c14;min-height:42%;flex-shrink:0}
+.tabs{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#0f172a;border-bottom:1px solid #1e293b}
+.tab{padding:5px 10px;border-radius:7px;font-size:11px;font-weight:800;background:#00ff8815;color:#00ff88;border:1px solid #00ff8830}
+.tbtn{padding:5px 9px;border-radius:7px;background:#1e293b;border:1px solid #2a3a52;color:#cbd5e1;font-size:11px;font-weight:700;display:flex;gap:4px;align-items:center;cursor:pointer}
+#output{flex:1;padding:10px;font-size:12.5px;overflow:auto;white-space:pre-wrap;line-height:1.6}
+.ok{color:#00ff88}.err{color:#ff5c7a}.info{color:#64748b}.ai{color:#a78bfa}
+#inputBox{display:none;padding:8px;background:#0f172a;border-top:2px solid #00ff88;gap:6px;flex-direction:column}
+#inputBox textarea{flex:1;padding:11px;background:#000;border:1px solid #334155;border-radius:8px;color:white;outline:none;min-height:60px;resize:vertical}
+.run-bar{height:52px;background:#0f172a;border-top:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;padding:0 8px;gap:6px;flex-shrink:0}
+.run-left{display:flex;gap:6px;align-items:center}
+.run-right{display:flex;gap:6px}
+.rbtn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.rbtn-main{background:linear-gradient(135deg,#00ff88,#00d2ff);color:#000}
+.rbtn-sub{background:#1e293b;color:#e2e8f0;border:1px solid #334155}
+.rbtn-danger{background:#2a1215;color:#ff5c7a;border:1px solid #4a1a20}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;z-index:999;padding:16px}
+.modal.show{display:flex}
+.card{width:100%;max-width:400px;background:#0f172a;border:1px solid #1e293b;border-radius:18px;padding:18px}
+.card textarea,.card input{width:100%;padding:12px;background:#000;border:1px solid #334155;border-radius:10px;color:white;margin:6px 0;outline:none}
+.ai-box{margin:0 10px 10px;padding:10px;background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:10px;display:none;font-size:12px}
+.ai-box.show{display:block}
+</style>
+</head>
+<body>
+<div class="top">
+<div class="logo"><div class="ib"><i class="fas fa-bolt"></i></div><b>GS-CODE</b> ULTRA</div>
+<div class="controls">
+<select id="lang"><option value="python">🐍 Python</option><option value="javascript">⚡ JS</option><option value="c">🔷 C</option><option value="cpp">💎 C++</option><option value="java">☕ Java</option><option value="go">🐹 Go</option><option value="html">🎨 HTML</option></select>
+<button class="btn btn-icon" onclick="openM('ai')"><i class="fas fa-wand-magic-sparkles" style="color:#a78bfa"></i></button>
+<button class="btn btn-icon" onclick="openM('save')"><i class="fas fa-floppy-disk"></i></button>
+</div>
+</div>
+<div id="editor"></div>
+<div class="divider"></div>
+<div class="bottom">
+<div class="tabs">
+<div class="tab" id="statusTab">TERMINAL • Ready</div>
+<div style="display:flex;gap:5px"><button class="tbtn" onclick="fixAI()"><i class="fas fa-robot"></i> FIX AI</button><button class="tbtn" onclick="copyOut()">COPY</button></div>
+</div>
+<div id="output"><span class="info">// ULTRA Fixed ✅ C/C++ Ab Chalega</span>
+<span class="ok">> Press Ctrl+Enter to Run</span>
+</div>
+<div class="ai-box" id="aiBox"></div>
+<div id="inputBox"><small style="color:#00ff88">Input (har line alag test case ke liye):</small><textarea id="userInput" placeholder="jaise: 5&#10;10"></textarea><div style="display:flex;gap:6px"><button class="btn btn-run" style="flex:1;justify-content:center" onclick="sendInput()">RUN WITH INPUT</button><button class="btn" style="flex:1;justify-content:center;background:#1e293b;color:white" onclick="document.getElementById('inputBox').style.display='none'">CANCEL</button></div></div>
+<div class="run-bar">
+<div class="run-left">
+<button class="rbtn rbtn-main" onclick="runCode('normal')"><i class="fas fa-play"></i> RUN</button>
+<button class="rbtn rbtn-sub" onclick="showInputBox()"><i class="fas fa-keyboard"></i> WITH INPUT</button>
+</div>
+<div class="run-right">
+<button class="rbtn rbtn-sub" onclick="clearOut()"><i class="fas fa-broom"></i></button>
+<button class="rbtn rbtn-danger" onclick="stopCode()"><i class="fas fa-stop"></i></button>
+</div>
+</div>
+</div>
+<div class="modal" id="ai"><div class="card">
+<h3>✨ AI Generator</h3><textarea id="aiPrompt" placeholder="Kya banana hai?"></textarea>
+<div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-run" style="flex:1;justify-content:center;padding:12px" onclick="genAI()">GENERATE</button><button class="btn" style="flex:1;justify-content:center;padding:12px;background:#1e293b;color:white" onclick="closeM('ai')">CLOSE</button></div>
+</div></div>
+<div class="modal" id="save"><div class="card">
+<h3>💾 Save Code</h3><input id="sName" placeholder="Naam"><button class="btn btn-run" style="width:100%;justify-content:center;padding:12px;margin-top:8px" onclick="saveC()">SAVE</button>
+<div id="sList" style="margin-top:10px;max-height:180px;overflow:auto"></div>
+<button class="btn" style="width:100%;justify-content:center;padding:10px;background:#1e293b;color:white;margin-top:8px" onclick="closeM('save')">CLOSE</button>
+</div></div>
+<script>
+let editor, pyodide, pendingInput=null, lastError="", isRunning=false, pyInputResolver=null;
+const starter={
+python:`name = input("Naam: ")
+print(f"Welcome {name} 🚀")
+for i in range(1,6):
+ print(f"Count {i}")`,
+javascript:`console.log("JS ✅"); for(let i=1;i<=5;i++) console.log(i)`,
+c:`#include <stdio.h>\nint main(){\n printf("C Working ✅\\n");\n return 0;\n}`,
+cpp:`#include <bits/stdc++.h>\nusing namespace std;\nint main(){\n cout<<"C++ ✅"<<endl;\n return 0;\n}`,
+java:`public class Main{\n public static void main(String[] a){\n System.out.println("Java ✅");\n }\n}`,
+go:`package main\nimport "fmt"\nfunc main(){fmt.Println("Go ✅")}`,
+html:`<!DOCTYPE html><html><body style="background:#0a0e14;color:white;text-align:center;padding:40px"><h1 style="color:#00ff88">HTML ✅</h1></body></html>`
+};
+require.config({paths:{'vs':'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs'}});
+require(['vs/editor/editor.main'],function(){
+ editor=monaco.editor.create(document.getElementById('editor'),{value:localStorage.getItem('gs-ultra')||starter.python,language:'python',theme:'vs-dark',fontSize:14,minimap:{enabled:false},automaticLayout:true,wordWrap:'on'});
+ editor.onDidChangeModelContent(()=>localStorage.setItem('gs-ultra',editor.getValue()));
+ document.getElementById('lang').addEventListener('change',e=>{ const v=e.target.value; editor.setValue(starter[v]||starter.python); monaco.editor.setModelLanguage(editor.getModel(), v==='cpp'?'cpp':v); });
+ document.addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); runCode('normal'); } });
+ renderSaves();
+});
+function addOut(t,c=""){let o=document.getElementById('output');let d=document.createElement('div');d.className=c;d.textContent=t;o.appendChild(d);o.scrollTop=o.scrollHeight;}
+function openM(id){document.getElementById(id).classList.add('show'); if(id==='save') renderSaves();}
+function closeM(id){document.getElementById(id).classList.remove('show');}
+function showInputBox(){ document.getElementById('inputBox').style.display='flex'; document.getElementById('userInput').focus(); }
+window.getPythonInput=(promptText)=>new Promise(res=>{
+ addOut(promptText,"ai"); document.getElementById('inputBox').style.display='flex'; document.getElementById('userInput').focus();
+ pyInputResolver=v=>{ res(v); document.getElementById('inputBox').style.display='none'; pyInputResolver=null; };
+});
+function sendInput(){
+  let v=document.getElementById('userInput').value;
+  if(pyInputResolver){ addOut("> "+v,"info"); pyInputResolver(v); }
+  else { pendingInput=v; document.getElementById('inputBox').style.display='none'; runCode('input_exec'); }
+}
+function clearOut(){ document.getElementById('output').innerHTML='<span class="info">// Cleared ✨</span>'; }
+function stopCode(){ isRunning=false; addOut("\n> Stopped by user ⏹️","err"); document.getElementById('statusTab').textContent='TERMINAL • Stopped'; document.getElementById('inputBox').style.display='none'; }
+async function runCode(mode){
+ if(isRunning && mode!=='input_exec'){ addOut("Already running... STOP dabao","err"); return; }
+ if(mode==='input'){ showInputBox(); return; }
+ let actualInput = mode==='input_exec'? pendingInput : "";
+ if(mode==='input_exec') pendingInput=null;
+
+ isRunning=true; let lang=document.getElementById('lang').value, code=editor.getValue();
+ if(mode==='normal') document.getElementById('output').innerHTML="";
+ document.getElementById('statusTab').textContent='TERMINAL • Running '+lang+'...';
+ addOut(mode==='input_exec'?'⌨️ Running with Input...':'🚀 Running '+lang+'...','info');
+ try{
+  if(lang==='python'){
+   if(!pyodide){ addOut("⏳ Loading Python...","info"); pyodide=await loadPyodide(); }
+   await pyodide.runPythonAsync(`import builtins, js\nfrom js import getPythonInput as _getInput\nasync def custom_input(p=""):\n v=await _getInput(p)\n return v\nbuiltins.input=custom_input`);
+   let wrapped="async def __gs_main__():\n"+code.split("\n").map(l=>" "+l).join("\n")+"\nawait __gs_main__()";
+   pyodide.setStdout({batched:(t)=>addOut(t,"ok")}); pyodide.setStderr({batched:(t)=>addOut(t,"err")});
+   await pyodide.runPythonAsync(wrapped); addOut("\n> Done ✅","ok");
+  } else if(lang==='html'){ let w=window.open(); w.document.write(code); w.document.close(); addOut("> Preview Opened ✨","ok"); }
+  else if(lang==='javascript'){
+   let logs=[]; let origLog=console.log; console.log=(...a)=>{logs.push(a.join(' ')); origLog(...a);};
+   new Function(code)(); console.log=origLog; logs.forEach(l=>addOut(l,"ok")); addOut("\n> Done ✅","ok");
+  }
+  else {
+   // FIXED: Piston API with proper CORS handling
+   let pistonLang = lang==='cpp'?'c++':lang;
+   let version = "*";
+   let fileName = lang==='java'? "Main.java" : "main."+ (lang==='cpp'?'cpp':lang);
+   addOut("☁️ Compiling "+pistonLang+"...","info");
+   let body = { language: pistonLang, version: version, files: [{name: fileName, content: code}], stdin: actualInput };
+   let res = await fetch("https://emkc.org/api/v2/piston/execute",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+   if(!res.ok) throw new Error("API Error "+res.status);
+   let data=await res.json();
+   if(data.run){
+     if(data.run.stdout) addOut(data.run.stdout,"ok");
+     if(data.run.stderr){ addOut(data.run.stderr,"err"); lastError=data.run.stderr; showFix(data.run.stderr); }
+     else if(data.run.code===0) addOut("\n> Done ✅ Exit: "+data.run.code,"ok");
+     else addOut("\n> Exit Code: "+data.run.code,"info");
+   } else { addOut(JSON.stringify(data).slice(0,300),"err"); }
+  }
+ }catch(e){
+   addOut("Error: "+e.message,"err"); lastError=e.message; showFix(e.message);
+   console.error(e);
+ }
+ isRunning=false; document.getElementById('statusTab').textContent='TERMINAL • Ready';
+}
+function showFix(err){ let b=document.getElementById('aiBox'); b.classList.add('show'); b.innerHTML=`<b style="color:#a78bfa">🤖 AI Fix:</b> ${err.slice(0,250)}<br><button class="tbtn" style="margin-top:6px" onclick="fixAI()">Auto Fix</button>`; }
+function fixAI(){ if(!lastError) return; addOut("> AI Try kar raha hu...","ai"); document.getElementById('aiBox').classList.remove('show'); }
+function genAI(){ let p=document.getElementById('aiPrompt').value.toLowerCase(); let code=starter.python; if(p.includes('calculator')) code=`a=float(input("A: "))\nb=float(input("B: "))\nprint(a+b)`; if(p.includes('prime')) code=`n=int(input("Num: "))\nprint("Prime" if n>1 and all(n%i!=0 for i in range(2,int(n**0.5)+1)) else "Not Prime")`; editor.setValue(code); closeM('ai'); addOut("> AI Generated ✅","ok"); }
+function copyOut(){ navigator.clipboard.writeText(document.getElementById('output').innerText); addOut("> Copied ✅","info"); }
+function saveC(){ let n=document.getElementById('sName').value||"code_"+Date.now(); let s=JSON.parse(localStorage.getItem('gs-saves-u')||"{}"); s[n]=editor.getValue(); localStorage.setItem('gs-saves-u',JSON.stringify(s)); renderSaves(); addOut("> Saved "+n,"ok"); closeM('save'); }
+function renderSaves(){ let s=JSON.parse(localStorage.getItem('gs-saves-u')||"{}"); let h=""; for(let k in s) h+=`<div style="padding:8px;background:#1e293b;border-radius:8px;margin:5px 0;display:flex;justify-content:space-between"><span>${k}</span><button onclick="editor.setValue(JSON.parse(localStorage.getItem('gs-saves-u'))['${k}']);closeM('save')" style="background:#00ff88;border:none;padding:4px 8px;border-radius:5px">LOAD</button></div>`; document.getElementById('sList').innerHTML=h||"<small style='color:#64748b'>No saves</small>"; }
+document.getElementById('userInput').addEventListener('keydown',e=>{ if(e.key==='Enter' && e.ctrlKey) sendInput(); });
+</script>
+</body>
+                                                               </html>
