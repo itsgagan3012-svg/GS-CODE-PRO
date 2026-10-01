@@ -1,6 +1,6 @@
 # 🚀 GS CODE PRO™ - India's Fastest Online Compiler
 
-> **Built by Gagan Sharma | From Kasganj, India 🇮🇳**
+> **Built by Gagan | From Kasganj, India 🇮🇳**
 > **GS CODE™ - Made in India, Made for India**
 
 ![GS CODE](https://img.shields.io/badge/GS%20CODE-PRO-blue?style=for-the-badge)
@@ -15,7 +15,7 @@
 - ✅ No Login Required - 100% Free
 - ✅ Super Fast - Runs in Browser
 - ✅ Mobile Friendly - Made for Students
-- ✅ By Gagan Sharma - Agra/Kasganj
+- ✅ By Gagan - Kasganj
 
 ### 👨‍💻 About Creator
 **Gagan**
